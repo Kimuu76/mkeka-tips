@@ -41,16 +41,16 @@ async function initDatabase() {
 			.request()
 			.query(`SELECT COUNT(*) AS count FROM Admins`);
 		if (adminCheck.recordset[0].count === 0) {
-			const hashedPassword = await bcrypt.hash("admin123", 10);
+			const hashedPassword = await bcrypt.hash("mkeka123", 10);
 			await pool
 				.request()
-				.input("username", "admin")
+				.input("username", "mkeka")
 				.input("passwordHash", hashedPassword)
 				.query(
 					"INSERT INTO Admins (Username, PasswordHash) VALUES (@username, @passwordHash)"
 				);
 			console.log(
-				"✅ Default admin created: username=admin, password=admin123"
+				"✅ Default admin created: username=mkeka, password=mkeka123"
 			);
 		}
 

@@ -29,8 +29,24 @@ export default function Footer() {
 				{/* Column 1 */}
 				<Grid item xs={12} md={4}>
 					<Typography variant='h6' fontWeight='bold' gutterBottom>
-						Mkeka Sure Tips
+						Mkeka Sure T
+						<span
+							onClick={() => (window.location.href = "/login")}
+							style={{
+								cursor: "pointer",
+								color: "#fff",
+								fontWeight: "bold",
+								transition: "color 0.3s ease",
+							}}
+							onMouseEnter={(e) => (e.target.style.color = "#90caf9")}
+							onMouseLeave={(e) => (e.target.style.color = "#fff")}
+							title='Login'
+						>
+							i
+						</span>
+						ps
 					</Typography>
+
 					<Typography variant='body2'>
 						Your trusted partner for accurate football predictions and premium
 						betting tips.

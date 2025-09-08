@@ -7,6 +7,9 @@ import {
 	Navigate,
 } from "react-router-dom";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
@@ -16,7 +19,7 @@ import Footer from "./components/Footer";
 function App() {
 	const [darkMode, setDarkMode] = useState(false);
 
-	// Memoize theme for performance
+	// ✅ Memoized theme for performance
 	const theme = useMemo(
 		() =>
 			createTheme({
@@ -47,7 +50,7 @@ function App() {
 
 	return (
 		<ThemeProvider theme={theme}>
-			<CssBaseline /> {/* Ensures background + text colors adapt to theme */}
+			<CssBaseline />
 			<Router>
 				<Navbar toggleDarkMode={() => setDarkMode(!darkMode)} />
 				<Routes>
@@ -63,6 +66,20 @@ function App() {
 					/>
 				</Routes>
 				<Footer />
+
+				{/* ✅ Toastify container */}
+				<ToastContainer
+					position='top-right'
+					autoClose={3000}
+					hideProgressBar={false}
+					newestOnTop={false}
+					closeOnClick
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+					theme={darkMode ? "dark" : "light"}
+				/>
 			</Router>
 		</ThemeProvider>
 	);

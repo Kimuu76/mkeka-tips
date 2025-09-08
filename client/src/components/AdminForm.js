@@ -6,10 +6,17 @@ import {
 	Grid,
 	Paper,
 	Typography,
-	Alert,
 	MenuItem,
 	Box,
+	CircularProgress,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	Divider,
 } from "@mui/material";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import api from "../api/api";
 
 export default function AdminForm({ onTipAdded }) {
@@ -22,19 +29,32 @@ export default function AdminForm({ onTipAdded }) {
 		market: "",
 		odds: "",
 		pick: "",
-		plan: "Free", // ✅ Added default plan
+		plan: "Free",
 	});
-	const [message, setMessage] = useState("");
+
+	const [loading, setLoading] = useState(false);
+	const [openConfirm, setOpenConfirm] = useState(false);
 
 	const handleChange = (e) => {
 		setForm({ ...form, [e.target.name]: e.target.value });
 	};
 
-	const handleSubmit = async (e) => {
+	const handleOpenConfirm = (e) => {
 		e.preventDefault();
+		setOpenConfirm(true);
+	};
+
+	const handleCloseConfirm = () => {
+		setOpenConfirm(false);
+	};
+
+	const handleSubmit = async () => {
+		setOpenConfirm(false);
+		setLoading(true);
 		try {
 			await api.post("/tips", form);
-			setMessage("✅ Tip added successfully!");
+			toast.success("✅ Tip added successfully!", { position: "top-right" });
+
 			setForm({
 				day: "",
 				time: "",
@@ -46,10 +66,13 @@ export default function AdminForm({ onTipAdded }) {
 				pick: "",
 				plan: "Free",
 			});
+
 			if (onTipAdded) onTipAdded();
 		} catch (error) {
 			console.error(error);
-			setMessage("❌ Failed to add tip");
+			toast.error("❌ Failed to add tip!", { position: "top-right" });
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -58,12 +81,8 @@ export default function AdminForm({ onTipAdded }) {
 			<Typography variant='h5' gutterBottom fontWeight='bold'>
 				Add New Tip
 			</Typography>
-			{message && (
-				<Alert severity='info' sx={{ mb: 2 }}>
-					{message}
-				</Alert>
-			)}
-			<form onSubmit={handleSubmit}>
+
+			<form onSubmit={handleOpenConfirm}>
 				<Grid container spacing={2}>
 					<Grid item xs={12} sm={6}>
 						<TextField
@@ -80,6 +99,7 @@ export default function AdminForm({ onTipAdded }) {
 							<MenuItem value='tomorrow'>Tomorrow</MenuItem>
 						</TextField>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='time'
@@ -90,6 +110,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='league'
@@ -100,6 +121,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='home'
@@ -110,6 +132,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='away'
@@ -120,6 +143,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							select
@@ -135,6 +159,7 @@ export default function AdminForm({ onTipAdded }) {
 							<MenuItem value='Both Teams Score'>Both Teams Score</MenuItem>
 						</TextField>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='pick'
@@ -145,6 +170,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12} sm={6}>
 						<TextField
 							name='odds'
@@ -156,6 +182,7 @@ export default function AdminForm({ onTipAdded }) {
 							required
 						/>
 					</Grid>
+
 					<Grid item xs={12}>
 						<TextField
 							select
@@ -171,6 +198,7 @@ export default function AdminForm({ onTipAdded }) {
 							<MenuItem value='Platinum'>Platinum</MenuItem>
 						</TextField>
 					</Grid>
+
 					<Grid item xs={12}>
 						<Box sx={{ display: "flex", gap: 2 }}>
 							<Button
@@ -178,12 +206,18 @@ export default function AdminForm({ onTipAdded }) {
 								variant='contained'
 								color='primary'
 								fullWidth
+								disabled={loading}
+								startIcon={
+									loading && <CircularProgress size={20} color='inherit' />
+								}
 							>
-								Add Tip
+								{loading ? "Adding..." : "Add Tip"}
 							</Button>
+
 							<Button
 								variant='outlined'
 								fullWidth
+								disabled={loading}
 								onClick={() =>
 									setForm({
 										day: "",
@@ -204,6 +238,54 @@ export default function AdminForm({ onTipAdded }) {
 					</Grid>
 				</Grid>
 			</form>
+
+			{/* ✅ Confirmation Dialog with Preview */}
+			<Dialog
+				open={openConfirm}
+				onClose={handleCloseConfirm}
+				maxWidth='sm'
+				fullWidth
+			>
+				<DialogTitle>Preview Tip Before Adding</DialogTitle>
+				<DialogContent>
+					<Typography variant='body1' gutterBottom>
+						Please review the tip details before confirming:
+					</Typography>
+					<Divider sx={{ my: 2 }} />
+					<Typography>
+						<strong>Day:</strong> {form.day}
+					</Typography>
+					<Typography>
+						<strong>Time:</strong> {form.time}
+					</Typography>
+					<Typography>
+						<strong>League:</strong> {form.league}
+					</Typography>
+					<Typography>
+						<strong>Match:</strong> {form.home} vs {form.away}
+					</Typography>
+					<Typography>
+						<strong>Market:</strong> {form.market}
+					</Typography>
+					<Typography>
+						<strong>Pick:</strong> {form.pick}
+					</Typography>
+					<Typography>
+						<strong>Odds:</strong> {form.odds}
+					</Typography>
+					<Typography>
+						<strong>Plan:</strong> {form.plan}
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={handleCloseConfirm} color='secondary'>
+						Cancel
+					</Button>
+					<Button onClick={handleSubmit} color='primary' variant='contained'>
+						Confirm & Add
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Paper>
 	);
 }
