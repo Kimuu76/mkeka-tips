@@ -3,7 +3,7 @@
 import axios from "axios";
 
 const api = axios.create({
-	baseURL: "http://localhost:5000/api", // Update if using a deployed backend
+	baseURL: "https://mkeka-server.onrender.com/api", // Update if using a deployed backend
 });
 
 // Add JWT token to headers if available
