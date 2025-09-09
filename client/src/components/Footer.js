@@ -4,9 +4,11 @@ import { Box, Typography, Grid, IconButton, Button } from "@mui/material";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import { useNavigate } from "react-router-dom";
 
 export default function Footer() {
-	const whatsappNumber = "254712992577"; // Replace with your actual WhatsApp number
+	const navigate = useNavigate();
+	const whatsappNumber = "254712992577";
 	const whatsappLink = `https://wa.me/${whatsappNumber}?text=Hello!%20I%20need%20help%20with%20Mkeka%20Sure%20Tips`;
 
 	const scrollToSection = (id) => {
@@ -31,7 +33,7 @@ export default function Footer() {
 					<Typography variant='h6' fontWeight='bold' gutterBottom>
 						Mkeka Sure T
 						<span
-							onClick={() => (window.location.href = "/login")}
+							onClick={() => navigate("/login")}
 							style={{
 								cursor: "pointer",
 								color: "#fff",

@@ -23,14 +23,12 @@ export default function TipsTable({
 	isAdmin = false,
 	onEdit,
 	onDelete,
+	sectionType = "today", // ✅ new prop: "today" or "results"
 }) {
-	// ✅ Pagination state
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
-
-	// ✅ Sorting state
 	const [order, setOrder] = useState("asc");
-	const [orderBy, setOrderBy] = useState("Time");
+	const [orderBy, setOrderBy] = useState("");
 
 	const handleSort = (property) => {
 		const isAsc = orderBy === property && order === "asc";
@@ -38,24 +36,58 @@ export default function TipsTable({
 		setOrderBy(property);
 	};
 
-	const handleChangePage = (event, newPage) => {
-		setPage(newPage);
-	};
-
+	const handleChangePage = (event, newPage) => setPage(newPage);
 	const handleChangeRowsPerPage = (event) => {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
 
-	// ✅ Sorting function
-	const sortedTips = [...tips].sort((a, b) => {
-		if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
-		if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
-		return 0;
+	// ✅ Sort tips
+	let sortedTips = [...tips].sort((a, b) => {
+		const dateA = new Date(a.Date);
+		const dateB = new Date(b.Date);
+		if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
+
+		const [hourA, minuteA] = (a.Time || "00:00").split(":").map(Number);
+		const [hourB, minuteB] = (b.Time || "00:00").split(":").map(Number);
+		return hourA - hourB || minuteA - minuteB;
 	});
 
-	// ✅ Paginated tips
-	const paginatedTips = sortedTips.slice(
+	if (orderBy) {
+		sortedTips = sortedTips.sort((a, b) => {
+			if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
+			if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
+			return 0;
+		});
+	}
+
+	// ✅ Apply filtering for clients based on sectionType
+	if (!isAdmin) {
+		if (sectionType === "today") {
+			// Show only Pending tips for Today section
+			sortedTips = sortedTips.filter((tip) => tip.Status === "Pending");
+		} else if (sectionType === "results") {
+			// Show only Won/Lost tips for Recent Results
+			sortedTips = sortedTips.filter(
+				(tip) => tip.Status === "Won" || tip.Status === "Lost"
+			);
+		}
+	}
+
+	// ✅ Group by Day
+	let flattenedList = [];
+	let currentDay = "";
+	sortedTips.forEach((tip) => {
+		const dayLabel = tip.Day || tip.Date;
+		if (dayLabel !== currentDay) {
+			flattenedList.push({ type: "header", dayLabel });
+			currentDay = dayLabel;
+		}
+		flattenedList.push({ type: "tip", ...tip });
+	});
+
+	// ✅ Pagination
+	const paginatedList = flattenedList.slice(
 		page * rowsPerPage,
 		page * rowsPerPage + rowsPerPage
 	);
@@ -65,8 +97,10 @@ export default function TipsTable({
 			<Table>
 				<TableHead>
 					<TableRow>
-						{!isAdmin && <TableCell>Select</TableCell>}
-						<TableCell sortDirection={orderBy === "Time" ? order : false}>
+						{!isAdmin && sectionType === "today" && (
+							<TableCell>Select</TableCell>
+						)}
+						<TableCell>
 							<TableSortLabel
 								active={orderBy === "Time"}
 								direction={orderBy === "Time" ? order : "asc"}
@@ -75,72 +109,64 @@ export default function TipsTable({
 								Time
 							</TableSortLabel>
 						</TableCell>
+						<TableCell>Date</TableCell>
 						<TableCell>Fixture</TableCell>
 						<TableCell>Market</TableCell>
 						<TableCell>Pick</TableCell>
 						<TableCell>Odds</TableCell>
-						{isAdmin && (
-							<TableCell sortDirection={orderBy === "Status" ? order : false}>
-								<TableSortLabel
-									active={orderBy === "Status"}
-									direction={orderBy === "Status" ? order : "asc"}
-									onClick={() => handleSort("Status")}
-								>
-									Status
-								</TableSortLabel>
-							</TableCell>
-						)}
-						{isAdmin && (
-							<TableCell sortDirection={orderBy === "Plan" ? order : false}>
-								<TableSortLabel
-									active={orderBy === "Plan"}
-									direction={orderBy === "Plan" ? order : "asc"}
-									onClick={() => handleSort("Plan")}
-								>
-									Plan
-								</TableSortLabel>
-							</TableCell>
-						)}
+						{isAdmin && <TableCell>Status</TableCell>}
+						{isAdmin && <TableCell>Plan</TableCell>}
 						<TableCell>Action</TableCell>
 					</TableRow>
 				</TableHead>
 				<TableBody>
-					{paginatedTips.length === 0 ? (
+					{sortedTips.length === 0 ? (
 						<TableRow>
-							<TableCell colSpan={isAdmin ? 8 : 7} align='center'>
+							<TableCell colSpan={isAdmin ? 9 : 8} align='center'>
 								No tips available
 							</TableCell>
 						</TableRow>
 					) : (
-						paginatedTips.map((tip) => {
-							const isSelected = selectedTips.some((t) => t.Id === tip.Id);
-
-							return (
-								<TableRow key={tip.Id}>
-									{!isAdmin && (
+						paginatedList.map((item, index) =>
+							item.type === "header" ? (
+								<TableRow
+									key={`header-${index}`}
+									style={{ background: "#f0f0f0" }}
+								>
+									<TableCell
+										colSpan={isAdmin ? 9 : 8}
+										style={{ fontWeight: "bold" }}
+									>
+										{item.dayLabel}
+									</TableCell>
+								</TableRow>
+							) : (
+								<TableRow key={item.Id}>
+									{!isAdmin && sectionType === "today" && (
 										<TableCell>
 											<Checkbox
-												checked={isSelected}
-												onChange={(e) => onSelectTip(tip, e.target.checked)}
+												checked={selectedTips.some((t) => t.Id === item.Id)}
+												onChange={(e) => onSelectTip(item, e.target.checked)}
 											/>
 										</TableCell>
 									)}
-									<TableCell>{tip.Time}</TableCell>
+									<TableCell>{item.Time}</TableCell>
+									<TableCell>{item.Date}</TableCell>
 									<TableCell>
-										{tip.Home} vs {tip.Away}
+										{item.Home} vs {item.Away}
 									</TableCell>
-									<TableCell>{tip.Market}</TableCell>
-									<TableCell>{tip.Pick}</TableCell>
-									<TableCell>{tip.Odds}</TableCell>
-									{isAdmin && <TableCell>{tip.Status}</TableCell>}
-									{isAdmin && <TableCell>{tip.Plan}</TableCell>}
+									<TableCell>{item.Market}</TableCell>
+									<TableCell>{item.Pick}</TableCell>
+									<TableCell>{item.Odds}</TableCell>
+									{isAdmin && <TableCell>{item.Status}</TableCell>}
+									{isAdmin && <TableCell>{item.Plan}</TableCell>}
 									<TableCell>
 										{isAdmin ? (
 											<>
 												<Tooltip title='Edit'>
 													<IconButton
 														color='primary'
-														onClick={() => onEdit && onEdit(tip)}
+														onClick={() => onEdit(item)}
 													>
 														<EditIcon />
 													</IconButton>
@@ -148,35 +174,38 @@ export default function TipsTable({
 												<Tooltip title='Delete'>
 													<IconButton
 														color='error'
-														onClick={() => onDelete && onDelete(tip.Id)}
+														onClick={() => onDelete(item.Id)}
 													>
 														<DeleteIcon />
 													</IconButton>
 												</Tooltip>
 											</>
 										) : (
-											<Button
-												variant='contained'
-												size='small'
-												disabled={isSelected}
-												onClick={() => onSelectTip(tip, true)}
-											>
-												{isSelected ? "Added" : "Add"}
-											</Button>
+											sectionType === "today" && (
+												<Button
+													variant='contained'
+													size='small'
+													disabled={selectedTips.some((t) => t.Id === item.Id)}
+													onClick={() => onSelectTip(item, true)}
+												>
+													{selectedTips.some((t) => t.Id === item.Id)
+														? "Added"
+														: "Add"}
+												</Button>
+											)
 										)}
 									</TableCell>
 								</TableRow>
-							);
-						})
+							)
+						)
 					)}
 				</TableBody>
 			</Table>
 
-			{/* ✅ Pagination Controls */}
 			<TablePagination
 				rowsPerPageOptions={[5, 10, 25]}
 				component='div'
-				count={tips.length}
+				count={flattenedList.length}
 				rowsPerPage={rowsPerPage}
 				page={page}
 				onPageChange={handleChangePage}

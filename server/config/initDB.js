@@ -22,6 +22,7 @@ async function initDatabase() {
 	IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Tips' AND xtype='U')
 	CREATE TABLE Tips (
 		Id INT PRIMARY KEY IDENTITY(1,1),
+		[Date] DATE NOT NULL,
 		Day VARCHAR(20) NOT NULL,
 		Time VARCHAR(20),
 		League VARCHAR(100),

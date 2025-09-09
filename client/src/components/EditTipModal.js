@@ -1,5 +1,4 @@
 /** @format */
-
 import React, { useState, useEffect } from "react";
 import {
 	Dialog,
@@ -11,12 +10,16 @@ import {
 	Grid,
 	Typography,
 	MenuItem,
-	Box,
+	CircularProgress,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 
 export default function EditTipModal({ open, onClose, tip, onSave }) {
 	const [formData, setFormData] = useState({
-		Day: "",
+		date: null,
 		Time: "",
 		League: "",
 		Home: "",
@@ -25,13 +28,15 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 		Pick: "",
 		Odds: "",
 		Status: "",
+		Score: "",
 		Plan: "",
 	});
+	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
 		if (tip) {
 			setFormData({
-				Day: tip.Day || "",
+				date: tip.Date ? dayjs(tip.Date) : null, // ✅ Load actual date
 				Time: tip.Time || "",
 				League: tip.League || "",
 				Home: tip.Home || "",
@@ -39,7 +44,8 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 				Market: tip.Market || "",
 				Pick: tip.Pick || "",
 				Odds: tip.Odds || "",
-				Status: tip.Status || "",
+				Status: tip.Status || "Pending",
+				Score: tip.Score || "",
 				Plan: tip.Plan || "Free",
 			});
 		}
@@ -50,12 +56,31 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
-	const handleSubmit = () => {
-		if (!formData.Day || !formData.Time || !formData.Plan) {
-			alert("Please fill Day, Time, and Plan fields");
+	const handleDateChange = (newDate) => {
+		setFormData((prev) => ({ ...prev, date: newDate }));
+	};
+
+	const handleSubmit = async () => {
+		if (!formData.date || !dayjs(formData.date).isValid()) {
+			alert("Please select a valid date");
 			return;
 		}
-		onSave({ ...tip, ...formData });
+		if (!formData.Time || !formData.Plan) {
+			alert("Please fill Date, Time, and Plan fields");
+			return;
+		}
+
+		setLoading(true);
+
+		// ✅ Format date properly
+		const payload = {
+			...tip,
+			...formData,
+			date: dayjs(formData.date).format("YYYY-MM-DD"), // ✅ Send correct format
+		};
+
+		await onSave(payload);
+		setLoading(false);
 	};
 
 	return (
@@ -75,138 +100,115 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 				<Typography variant='body2' color='textSecondary' sx={{ mb: 2 }}>
 					Update the details of this betting tip below.
 				</Typography>
-				<Grid container spacing={2}>
-					{/* Day */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Day'
-							label='Day'
-							value={formData.Day}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-							required
-						/>
-					</Grid>
+				<LocalizationProvider dateAdapter={AdapterDayjs}>
+					<Grid container spacing={2}>
+						{/* ✅ Date Picker */}
+						<Grid item xs={12} sm={6}>
+							<DatePicker
+								label='Match Date'
+								value={formData.date}
+								onChange={handleDateChange}
+								disablePast
+								slotProps={{
+									textField: { fullWidth: true, required: true },
+								}}
+							/>
+						</Grid>
 
-					{/* Time */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Time'
-							label='Time'
-							value={formData.Time}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-							required
-						/>
-					</Grid>
+						{/* Time */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='Time'
+								label='Time'
+								value={formData.Time}
+								onChange={handleChange}
+								fullWidth
+								variant='outlined'
+								required
+							/>
+						</Grid>
 
-					{/* League */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='League'
-							label='League'
-							value={formData.League}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
-					</Grid>
+						{[
+							{ name: "League", label: "League" },
+							{ name: "Home", label: "Home Team" },
+							{ name: "Away", label: "Away Team" },
+							{ name: "Market", label: "Market" },
+							{ name: "Pick", label: "Pick" },
+						].map((field) => (
+							<Grid item xs={12} sm={6} key={field.name}>
+								<TextField
+									name={field.name}
+									label={field.label}
+									value={formData[field.name]}
+									onChange={handleChange}
+									fullWidth
+									variant='outlined'
+								/>
+							</Grid>
+						))}
 
-					{/* Home */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Home'
-							label='Home Team'
-							value={formData.Home}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
-					</Grid>
+						{/* Odds */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='Odds'
+								label='Odds'
+								type='number'
+								value={formData.Odds}
+								onChange={handleChange}
+								fullWidth
+								variant='outlined'
+							/>
+						</Grid>
 
-					{/* Away */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Away'
-							label='Away Team'
-							value={formData.Away}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
-					</Grid>
+						{/* Status */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								select
+								name='Status'
+								label='Status'
+								value={formData.Status}
+								onChange={handleChange}
+								fullWidth
+								variant='outlined'
+							>
+								<MenuItem value='Pending'>Pending</MenuItem>
+								<MenuItem value='Won'>Won</MenuItem>
+								<MenuItem value='Lost'>Lost</MenuItem>
+							</TextField>
+						</Grid>
 
-					{/* Market */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Market'
-							label='Market'
-							value={formData.Market}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
-					</Grid>
+						{/* Score */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='Score'
+								label='Score (e.g. 2-1)'
+								value={formData.Score}
+								onChange={handleChange}
+								fullWidth
+								variant='outlined'
+							/>
+						</Grid>
 
-					{/* Pick */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Pick'
-							label='Pick'
-							value={formData.Pick}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
+						{/* Plan */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								select
+								name='Plan'
+								label='Plan'
+								value={formData.Plan}
+								onChange={handleChange}
+								fullWidth
+								variant='outlined'
+								required
+							>
+								<MenuItem value='Free'>Free</MenuItem>
+								<MenuItem value='Silver'>Silver</MenuItem>
+								<MenuItem value='Gold'>Gold</MenuItem>
+								<MenuItem value='Platinum'>Platinum</MenuItem>
+							</TextField>
+						</Grid>
 					</Grid>
-
-					{/* Odds */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Odds'
-							label='Odds'
-							type='number'
-							value={formData.Odds}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-						/>
-					</Grid>
-
-					{/* Status */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='Status'
-							label='Status'
-							value={formData.Status}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-							placeholder='Pending, Won, Lost'
-						/>
-					</Grid>
-
-					{/* Plan Dropdown */}
-					<Grid item xs={12} sm={6}>
-						<TextField
-							select
-							name='Plan'
-							label='Plan'
-							value={formData.Plan}
-							onChange={handleChange}
-							fullWidth
-							variant='outlined'
-							required
-						>
-							<MenuItem value='Free'>Free</MenuItem>
-							<MenuItem value='Silver'>Silver</MenuItem>
-							<MenuItem value='Gold'>Gold</MenuItem>
-							<MenuItem value='Platinum'>Platinum</MenuItem>
-						</TextField>
-					</Grid>
-				</Grid>
+				</LocalizationProvider>
 			</DialogContent>
 
 			<DialogActions
@@ -217,21 +219,17 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 					borderTop: "1px solid #ddd",
 				}}
 			>
-				<Button
-					onClick={onClose}
-					variant='outlined'
-					color='secondary'
-					sx={{ textTransform: "none", fontWeight: "bold" }}
-				>
+				<Button onClick={onClose} variant='outlined' color='secondary'>
 					Cancel
 				</Button>
 				<Button
 					onClick={handleSubmit}
 					variant='contained'
 					color='primary'
-					sx={{ textTransform: "none", fontWeight: "bold" }}
+					disabled={loading}
+					startIcon={loading && <CircularProgress size={18} color='inherit' />}
 				>
-					Save Changes
+					{loading ? "Saving..." : "Save Changes"}
 				</Button>
 			</DialogActions>
 		</Dialog>

@@ -18,22 +18,25 @@ import {
 	TextField,
 	MenuItem,
 	useMediaQuery,
+	Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import AddIcon from "@mui/icons-material/Add";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
 import AdminForm from "../components/AdminForm";
 import TipsTable from "../components/TipsTable";
 import EditTipModal from "../components/EditTipModal";
 import api from "../api/api";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 260;
 
 export default function Admin() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [selectedMenu, setSelectedMenu] = useState("add");
-	const [reload, setReload] = useState(false);
 	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [selectedTip, setSelectedTip] = useState(null);
 	const [loading, setLoading] = useState(false);
@@ -42,6 +45,7 @@ export default function Admin() {
 	const [statusFilter, setStatusFilter] = useState("");
 	const [planFilter, setPlanFilter] = useState("");
 	const [tips, setTips] = useState([]);
+	const navigate = useNavigate();
 
 	const isMobile = useMediaQuery("(max-width:900px)");
 
@@ -49,32 +53,58 @@ export default function Admin() {
 		setMobileOpen(!mobileOpen);
 	};
 
-	const handleReload = () => setReload((prev) => !prev);
+	// ✅ Fetch tips
+	const fetchTips = async () => {
+		setLoading(true);
+		try {
+			const params = {};
+			if (day) params.day = day;
+			if (searchQuery) params.search = searchQuery;
+			if (statusFilter) params.status = statusFilter;
+			if (planFilter) params.plan = planFilter;
 
+			const response = await api.get("/tips", { params });
+			setTips(response.data || []);
+		} catch (error) {
+			console.error("Error fetching tips:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		if (selectedMenu === "manage") {
+			fetchTips();
+		}
+	}, [selectedMenu, day, searchQuery, statusFilter, planFilter]);
+
+	// ✅ Add tip optimistically
+	const handleTipAdded = (newTip) => {
+		if (selectedMenu === "manage") {
+			setTips((prev) => [newTip, ...prev]);
+		}
+	};
+
+	// ✅ Edit Tip
 	const handleEdit = (tip) => {
 		setSelectedTip(tip);
 		setEditModalOpen(true);
 	};
 
-	const handleDelete = async (id) => {
-		if (window.confirm("Are you sure you want to delete this tip?")) {
-			try {
-				setLoading(true);
-				await api.delete(`/tips/${id}`);
-				handleReload();
-			} catch (error) {
-				console.error("Delete failed:", error);
-			} finally {
-				setLoading(false);
-			}
-		}
+	// ✅ Logout functionality
+	const handleLogout = () => {
+		localStorage.removeItem("authToken"); // Remove token
+		navigate("/", { replace: true }); // ✅ Navigate to login page
 	};
 
+	// ✅ Save changes (Update tip)
 	const handleSave = async (updatedTip) => {
 		try {
 			setLoading(true);
-			await api.put(`/tips/${updatedTip.Id}`, {
-				day: updatedTip.Day,
+
+			// ✅ Ensure correct payload for backend
+			const payload = {
+				date: updatedTip.Date || updatedTip.date, // Important for backend validation
 				time: updatedTip.Time,
 				league: updatedTip.League,
 				home: updatedTip.Home,
@@ -82,42 +112,46 @@ export default function Admin() {
 				market: updatedTip.Market,
 				pick: updatedTip.Pick,
 				odds: updatedTip.Odds,
-				status: updatedTip.Status,
 				plan: updatedTip.Plan,
-			});
+				status: updatedTip.Status,
+				score: updatedTip.Score,
+			};
+
+			await api.put(`/tips/${updatedTip.Id}`, payload);
+
+			toast.success("Tip updated successfully!");
 			setEditModalOpen(false);
-			handleReload();
+
+			// ✅ Update tips in state without refetching
+			setTips((prev) =>
+				prev.map((tip) =>
+					tip.Id === updatedTip.Id ? { ...tip, ...payload } : tip
+				)
+			);
 		} catch (error) {
+			toast.error("Failed to update tip!");
 			console.error("Update failed:", error);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	// ✅ Fetch tips from API
-	const fetchTips = async () => {
-		setLoading(true);
-		try {
-			const response = await api.get("/tips", {
-				params: {
-					day,
-					search: searchQuery,
-					status: statusFilter,
-					plan: planFilter,
-				},
-			});
-			setTips(response.data || []);
-		} catch (error) {
-			console.error("Error fetching tips:", error);
+	// ✅ Delete Tip
+	const handleDelete = async (id) => {
+		if (window.confirm("Are you sure you want to delete this tip?")) {
+			try {
+				setLoading(true);
+				await api.delete(`/tips/${id}`);
+				toast.success("Tip deleted successfully!");
+				setTips((prev) => prev.filter((tip) => tip.Id !== id));
+			} catch (error) {
+				toast.error("Failed to delete tip!");
+				console.error("Delete failed:", error);
+			} finally {
+				setLoading(false);
+			}
 		}
-		setLoading(false);
 	};
-
-	useEffect(() => {
-		if (selectedMenu === "manage") {
-			fetchTips();
-		}
-	}, [reload, day, searchQuery, statusFilter, planFilter, selectedMenu]);
 
 	const menuItems = [
 		{ key: "add", label: "Add Tip", icon: <AddIcon /> },
@@ -139,19 +173,29 @@ export default function Admin() {
 			<List>
 				{menuItems.map((item) => (
 					<ListItem
-						button
 						key={item.key}
 						selected={selectedMenu === item.key}
 						onClick={() => {
 							setSelectedMenu(item.key);
 							if (isMobile) setMobileOpen(false);
 						}}
+						button
 					>
 						<ListItemIcon>{item.icon}</ListItemIcon>
 						<ListItemText primary={item.label} />
 					</ListItem>
 				))}
 			</List>
+			<Divider sx={{ my: 2 }} />
+			<Button
+				variant='contained'
+				color='error'
+				startIcon={<LogoutIcon />}
+				onClick={handleLogout}
+				sx={{ m: 2, width: "calc(100% - 32px)" }}
+			>
+				Logout
+			</Button>
 		</Box>
 	);
 
@@ -239,7 +283,7 @@ export default function Admin() {
 								<Typography variant='h5' fontWeight='bold' mb={2}>
 									Add New Tip
 								</Typography>
-								<AdminForm onTipAdded={handleReload} />
+								<AdminForm onTipAdded={handleTipAdded} />
 							</>
 						)}
 

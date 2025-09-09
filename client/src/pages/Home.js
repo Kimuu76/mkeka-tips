@@ -18,6 +18,7 @@ import WhyUsSection from "../components/WhyUsSection";
 import ScrollToTop from "../components/ScrollToTop";
 import TipsTable from "../components/TipsTable";
 import api from "../api/api";
+import PremiumSection from "../components/PremiumSection";
 
 export default function Home() {
 	const [selectedTips, setSelectedTips] = useState([]);
@@ -150,112 +151,41 @@ export default function Home() {
 						Premium Tips
 					</Typography>
 
-					{/* Silver */}
-					<Box sx={{ position: "relative", marginTop: 3 }}>
-						<Box
-							sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}
-						>
-							<Typography
-								variant='h6'
-								fontWeight='bold'
-								sx={{ marginRight: 1 }}
-							>
-								Silver Plan
-							</Typography>
-							<Chip
-								label='SILVER'
-								sx={{
-									backgroundColor: "#C0C0C0",
-									color: "#000",
-									fontWeight: "bold",
-								}}
-								size='small'
-							/>
-						</Box>
-						<Box sx={{ position: "relative" }}>
-							<TipsTable
-								tips={silverTips}
-								onSelectTip={handleSelectTip}
-								selectedTips={selectedTips}
-								isAdmin={false}
-							/>
-							{userPlan !== "Silver" &&
-								userPlan !== "Gold" &&
-								userPlan !== "Platinum" && (
-									<LockedOverlay text='Unlock Silver Tips by subscribing!' />
-								)}
-						</Box>
-					</Box>
+					<PremiumSection
+						title='Silver Plan'
+						label='SILVER'
+						color='#C0C0C0'
+						allowedPlans={["Silver", "Gold", "Platinum"]}
+						userPlan={userPlan}
+						tips={silverTips}
+						onSelectTip={handleSelectTip}
+						selectedTips={selectedTips}
+						lockedText='Unlock Silver Tips by subscribing!'
+					/>
 
-					{/* Gold */}
-					<Box sx={{ position: "relative", marginTop: 4 }}>
-						<Box
-							sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}
-						>
-							<Typography
-								variant='h6'
-								fontWeight='bold'
-								sx={{ marginRight: 1 }}
-							>
-								Gold Plan
-							</Typography>
-							<Chip
-								label='GOLD'
-								sx={{
-									backgroundColor: "#FFD700",
-									color: "#000",
-									fontWeight: "bold",
-								}}
-								size='small'
-							/>
-						</Box>
-						<Box sx={{ position: "relative" }}>
-							<TipsTable
-								tips={goldTips}
-								onSelectTip={handleSelectTip}
-								selectedTips={selectedTips}
-								isAdmin={false}
-							/>
-							{userPlan !== "Gold" && userPlan !== "Platinum" && (
-								<LockedOverlay text='Upgrade to Gold to unlock these tips!' />
-							)}
-						</Box>
-					</Box>
+					<PremiumSection
+						title='Gold Plan'
+						label='GOLD'
+						color='#FFD700'
+						allowedPlans={["Gold", "Platinum"]}
+						userPlan={userPlan}
+						tips={goldTips}
+						onSelectTip={handleSelectTip}
+						selectedTips={selectedTips}
+						lockedText='Upgrade to Gold to unlock these tips!'
+					/>
 
-					{/* Platinum */}
-					<Box sx={{ position: "relative", marginTop: 4 }}>
-						<Box
-							sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}
-						>
-							<Typography
-								variant='h6'
-								fontWeight='bold'
-								sx={{ marginRight: 1 }}
-							>
-								Platinum Plan
-							</Typography>
-							<Chip
-								label='PLATINUM'
-								sx={{
-									backgroundColor: "#e5e4e2",
-									color: "#000",
-									fontWeight: "bold",
-								}}
-								size='small'
-							/>
-						</Box>
-						<Box sx={{ position: "relative" }}>
-							<TipsTable
-								tips={platinumTips}
-								onSelectTip={handleSelectTip}
-								selectedTips={selectedTips}
-								isAdmin={false}
-							/>
-							{userPlan !== "Platinum" && (
-								<LockedOverlay text='Go Platinum to access all premium tips!' />
-							)}
-						</Box>
-					</Box>
+					<PremiumSection
+						title='Platinum Plan'
+						label='PLATINUM'
+						color='#e5e4e2'
+						allowedPlans={["Platinum"]}
+						userPlan={userPlan}
+						tips={platinumTips}
+						onSelectTip={handleSelectTip}
+						selectedTips={selectedTips}
+						lockedText='Go Platinum to access all premium tips!'
+					/>
 				</Box>
 
 				{/* Divider */}

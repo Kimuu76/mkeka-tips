@@ -15,13 +15,17 @@ import {
 	DialogActions,
 	Divider,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api/api";
 
 export default function AdminForm({ onTipAdded }) {
 	const [form, setForm] = useState({
-		day: "",
+		date: null,
 		time: "",
 		league: "",
 		home: "",
@@ -39,8 +43,23 @@ export default function AdminForm({ onTipAdded }) {
 		setForm({ ...form, [e.target.name]: e.target.value });
 	};
 
+	const handleDateChange = (newDate) => {
+		setForm({ ...form, date: newDate });
+	};
+
 	const handleOpenConfirm = (e) => {
 		e.preventDefault();
+
+		if (!form.date || !dayjs(form.date).isValid()) {
+			toast.error("❌ Please select a valid date");
+			return;
+		}
+
+		if (!form.time || !form.league || !form.home || !form.away || !form.pick) {
+			toast.error("❌ Please fill all required fields");
+			return;
+		}
+
 		setOpenConfirm(true);
 	};
 
@@ -52,11 +71,21 @@ export default function AdminForm({ onTipAdded }) {
 		setOpenConfirm(false);
 		setLoading(true);
 		try {
-			await api.post("/tips", form);
+			const formattedDate = dayjs(form.date).format("YYYY-MM-DD");
+			const dayName = dayjs(form.date).format("dddd"); // ✅ Get day name
+
+			const payload = {
+				...form,
+				date: formattedDate,
+				day: dayName, // ✅ Add day for DB
+			};
+
+			await api.post("/tips", payload);
 			toast.success("✅ Tip added successfully!", { position: "top-right" });
 
+			// Reset form
 			setForm({
-				day: "",
+				date: null,
 				time: "",
 				league: "",
 				home: "",
@@ -76,170 +105,173 @@ export default function AdminForm({ onTipAdded }) {
 		}
 	};
 
+	const handleClear = () => {
+		setForm({
+			date: null,
+			time: "",
+			league: "",
+			home: "",
+			away: "",
+			market: "",
+			odds: "",
+			pick: "",
+			plan: "Free",
+		});
+	};
+
 	return (
 		<Paper sx={{ padding: 4, maxWidth: 700, margin: "30px auto" }}>
 			<Typography variant='h5' gutterBottom fontWeight='bold'>
 				Add New Tip
 			</Typography>
 
-			<form onSubmit={handleOpenConfirm}>
-				<Grid container spacing={2}>
-					<Grid item xs={12} sm={6}>
-						<TextField
-							select
-							name='day'
-							label='Day'
-							value={form.day}
-							onChange={handleChange}
-							fullWidth
-							required
-						>
-							<MenuItem value='yesterday'>Yesterday</MenuItem>
-							<MenuItem value='today'>Today</MenuItem>
-							<MenuItem value='tomorrow'>Tomorrow</MenuItem>
-						</TextField>
-					</Grid>
+			<LocalizationProvider dateAdapter={AdapterDayjs}>
+				<form onSubmit={handleOpenConfirm}>
+					<Grid container spacing={2}>
+						{/* ✅ Date Picker */}
+						<Grid item xs={12} sm={6}>
+							<DatePicker
+								label='Match Date'
+								value={form.date}
+								onChange={handleDateChange}
+								disablePast
+								slotProps={{
+									textField: { fullWidth: true, required: true },
+								}}
+							/>
+						</Grid>
 
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='time'
-							label='Match Time'
-							value={form.time}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='league'
-							label='League'
-							value={form.league}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='home'
-							label='Home Team'
-							value={form.home}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='away'
-							label='Away Team'
-							value={form.away}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							select
-							name='market'
-							label='Market'
-							value={form.market}
-							onChange={handleChange}
-							fullWidth
-							required
-						>
-							<MenuItem value='Over/Under'>Over/Under</MenuItem>
-							<MenuItem value='1X2'>1X2</MenuItem>
-							<MenuItem value='Both Teams Score'>Both Teams Score</MenuItem>
-						</TextField>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='pick'
-							label='Pick'
-							value={form.pick}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12} sm={6}>
-						<TextField
-							name='odds'
-							label='Odds'
-							type='number'
-							value={form.odds}
-							onChange={handleChange}
-							fullWidth
-							required
-						/>
-					</Grid>
-
-					<Grid item xs={12}>
-						<TextField
-							select
-							name='plan'
-							label='Plan'
-							value={form.plan}
-							onChange={handleChange}
-							fullWidth
-						>
-							<MenuItem value='Free'>Free</MenuItem>
-							<MenuItem value='Silver'>Silver</MenuItem>
-							<MenuItem value='Gold'>Gold</MenuItem>
-							<MenuItem value='Platinum'>Platinum</MenuItem>
-						</TextField>
-					</Grid>
-
-					<Grid item xs={12}>
-						<Box sx={{ display: "flex", gap: 2 }}>
-							<Button
-								type='submit'
-								variant='contained'
-								color='primary'
+						{/* ✅ Time Input */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='time'
+								label='Match Time'
+								placeholder='e.g., 18:30'
+								value={form.time}
+								onChange={handleChange}
 								fullWidth
-								disabled={loading}
-								startIcon={
-									loading && <CircularProgress size={20} color='inherit' />
-								}
-							>
-								{loading ? "Adding..." : "Add Tip"}
-							</Button>
+								required
+							/>
+						</Grid>
 
-							<Button
-								variant='outlined'
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='league'
+								label='League'
+								value={form.league}
+								onChange={handleChange}
 								fullWidth
-								disabled={loading}
-								onClick={() =>
-									setForm({
-										day: "",
-										time: "",
-										league: "",
-										home: "",
-										away: "",
-										market: "",
-										odds: "",
-										pick: "",
-										plan: "Free",
-									})
-								}
-							>
-								Clear
-							</Button>
-						</Box>
-					</Grid>
-				</Grid>
-			</form>
+								required
+							/>
+						</Grid>
 
-			{/* ✅ Confirmation Dialog with Preview */}
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='home'
+								label='Home Team'
+								value={form.home}
+								onChange={handleChange}
+								fullWidth
+								required
+							/>
+						</Grid>
+
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='away'
+								label='Away Team'
+								value={form.away}
+								onChange={handleChange}
+								fullWidth
+								required
+							/>
+						</Grid>
+
+						<Grid item xs={12} sm={6}>
+							<TextField
+								select
+								name='market'
+								label='Market'
+								value={form.market}
+								onChange={handleChange}
+								fullWidth
+								required
+							>
+								<MenuItem value='Over/Under'>Over/Under</MenuItem>
+								<MenuItem value='1X2'>1X2</MenuItem>
+								<MenuItem value='Both Teams Score'>Both Teams Score</MenuItem>
+							</TextField>
+						</Grid>
+
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='pick'
+								label='Pick'
+								value={form.pick}
+								onChange={handleChange}
+								fullWidth
+								required
+							/>
+						</Grid>
+
+						<Grid item xs={12} sm={6}>
+							<TextField
+								name='odds'
+								label='Odds'
+								type='number'
+								inputProps={{ step: "0.01" }}
+								value={form.odds}
+								onChange={handleChange}
+								fullWidth
+								required
+							/>
+						</Grid>
+
+						<Grid item xs={12}>
+							<TextField
+								select
+								name='plan'
+								label='Plan'
+								value={form.plan}
+								onChange={handleChange}
+								fullWidth
+							>
+								<MenuItem value='Free'>Free</MenuItem>
+								<MenuItem value='Silver'>Silver</MenuItem>
+								<MenuItem value='Gold'>Gold</MenuItem>
+								<MenuItem value='Platinum'>Platinum</MenuItem>
+							</TextField>
+						</Grid>
+
+						{/* ✅ Action Buttons */}
+						<Grid item xs={12}>
+							<Box sx={{ display: "flex", gap: 2 }}>
+								<Button
+									type='submit'
+									variant='contained'
+									color='primary'
+									fullWidth
+									disabled={loading}
+									startIcon={loading && <CircularProgress size={20} />}
+								>
+									{loading ? "Adding..." : "Add Tip"}
+								</Button>
+
+								<Button
+									variant='outlined'
+									fullWidth
+									disabled={loading}
+									onClick={handleClear}
+								>
+									Clear
+								</Button>
+							</Box>
+						</Grid>
+					</Grid>
+				</form>
+			</LocalizationProvider>
+
+			{/* ✅ Confirmation Dialog */}
 			<Dialog
 				open={openConfirm}
 				onClose={handleCloseConfirm}
@@ -253,7 +285,12 @@ export default function AdminForm({ onTipAdded }) {
 					</Typography>
 					<Divider sx={{ my: 2 }} />
 					<Typography>
-						<strong>Day:</strong> {form.day}
+						<strong>Date:</strong>{" "}
+						{form.date ? dayjs(form.date).format("YYYY-MM-DD") : "-"}
+					</Typography>
+					<Typography>
+						<strong>Day:</strong>{" "}
+						{form.date ? dayjs(form.date).format("dddd") : "-"}
 					</Typography>
 					<Typography>
 						<strong>Time:</strong> {form.time}
