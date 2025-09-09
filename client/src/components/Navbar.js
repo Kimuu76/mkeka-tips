@@ -53,15 +53,30 @@ export default function Navbar({ toggleDarkMode }) {
 				}}
 			>
 				<Toolbar sx={{ justifyContent: "space-between" }}>
-					{/* Logo */}
-					<Typography
-						variant='h6'
-						fontWeight='bold'
-						sx={{ cursor: "pointer" }}
+					{/* Logo with Banner */}
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							cursor: "pointer",
+							gap: 1,
+						}}
 						onClick={() => handleScroll("hero-section")}
 					>
-						Mkeka Sure Tips
-					</Typography>
+						<Box
+							component='img'
+							src='/assets/mkeka (1).jpg' // ✅ Replace with your logo path
+							alt='Mkeka Logo'
+							sx={{
+								height: 80,
+								width: 80,
+								borderRadius: "50%", // ✅ Optional for circular logo
+							}}
+						/>
+						<Typography variant='h6' fontWeight='bold'>
+							Mkeka Sure Tips
+						</Typography>
+					</Box>
 
 					{/* Desktop Navigation */}
 					<Box sx={{ display: { xs: "none", md: "flex" }, gap: 3 }}>
