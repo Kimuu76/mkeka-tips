@@ -65,7 +65,7 @@ export default function Navbar({ toggleDarkMode }) {
 					>
 						<Box
 							component='img'
-							src='/assets/mkeka (1).jpg' // ✅ Replace with your logo path
+							src='/assets/mkeka (2).jpg' // ✅ Replace with your logo path
 							alt='Mkeka Logo'
 							sx={{
 								height: 80,
