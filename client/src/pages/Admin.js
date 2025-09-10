@@ -36,7 +36,7 @@ const drawerWidth = 260;
 
 export default function Admin() {
 	const [mobileOpen, setMobileOpen] = useState(false);
-	const [selectedMenu, setSelectedMenu] = useState("add");
+	const [selectedMenu, setSelectedMenu] = useState("manage");
 	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [selectedTip, setSelectedTip] = useState(null);
 	const [loading, setLoading] = useState(false);

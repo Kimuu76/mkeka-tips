@@ -11,13 +11,20 @@ import {
 	Typography,
 	MenuItem,
 	CircularProgress,
+	Box,
+	Divider,
+	useMediaQuery,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
+import { useTheme } from "@mui/material/styles";
 
 export default function EditTipModal({ open, onClose, tip, onSave }) {
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
 	const [formData, setFormData] = useState({
 		date: null,
 		Time: "",
@@ -36,7 +43,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 	useEffect(() => {
 		if (tip) {
 			setFormData({
-				date: tip.Date ? dayjs(tip.Date) : null, // ✅ Load actual date
+				date: tip.Date ? dayjs(tip.Date) : null,
 				Time: tip.Time || "",
 				League: tip.League || "",
 				Home: tip.Home || "",
@@ -72,11 +79,10 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 
 		setLoading(true);
 
-		// ✅ Format date properly
 		const payload = {
 			...tip,
 			...formData,
-			date: dayjs(formData.date).format("YYYY-MM-DD"), // ✅ Send correct format
+			date: dayjs(formData.date).format("YYYY-MM-DD"),
 		};
 
 		await onSave(payload);
@@ -84,7 +90,13 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 	};
 
 	return (
-		<Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
+		<Dialog
+			open={open}
+			onClose={onClose}
+			maxWidth='md'
+			fullWidth
+			fullScreen={isMobile}
+		>
 			<DialogTitle
 				sx={{
 					fontWeight: "bold",
@@ -102,7 +114,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 				</Typography>
 				<LocalizationProvider dateAdapter={AdapterDayjs}>
 					<Grid container spacing={2}>
-						{/* ✅ Date Picker */}
+						{/* Date Picker */}
 						<Grid item xs={12} sm={6}>
 							<DatePicker
 								label='Match Date'
@@ -110,7 +122,12 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								onChange={handleDateChange}
 								disablePast
 								slotProps={{
-									textField: { fullWidth: true, required: true },
+									textField: {
+										fullWidth: true,
+										required: true,
+										variant: "outlined",
+										sx: { borderRadius: 2 },
+									},
 								}}
 							/>
 						</Grid>
@@ -123,8 +140,9 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								value={formData.Time}
 								onChange={handleChange}
 								fullWidth
-								variant='outlined'
 								required
+								variant='outlined'
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
@@ -143,6 +161,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 									onChange={handleChange}
 									fullWidth
 									variant='outlined'
+									sx={{ borderRadius: 2 }}
 								/>
 							</Grid>
 						))}
@@ -157,6 +176,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								onChange={handleChange}
 								fullWidth
 								variant='outlined'
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
@@ -170,6 +190,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								onChange={handleChange}
 								fullWidth
 								variant='outlined'
+								sx={{ borderRadius: 2 }}
 							>
 								<MenuItem value='Pending'>Pending</MenuItem>
 								<MenuItem value='Won'>Won</MenuItem>
@@ -186,6 +207,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								onChange={handleChange}
 								fullWidth
 								variant='outlined'
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
@@ -198,8 +220,9 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 								value={formData.Plan}
 								onChange={handleChange}
 								fullWidth
-								variant='outlined'
 								required
+								variant='outlined'
+								sx={{ borderRadius: 2 }}
 							>
 								<MenuItem value='Free'>Free</MenuItem>
 								<MenuItem value='Silver'>Silver</MenuItem>
@@ -213,13 +236,20 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 
 			<DialogActions
 				sx={{
-					justifyContent: "space-between",
+					justifyContent: isMobile ? "center" : "space-between",
 					padding: 2,
 					backgroundColor: "#f5f5f5",
 					borderTop: "1px solid #ddd",
+					position: isMobile ? "sticky" : "static",
+					bottom: 0,
 				}}
 			>
-				<Button onClick={onClose} variant='outlined' color='secondary'>
+				<Button
+					onClick={onClose}
+					variant='outlined'
+					color='secondary'
+					fullWidth={isMobile}
+				>
 					Cancel
 				</Button>
 				<Button
@@ -227,6 +257,7 @@ export default function EditTipModal({ open, onClose, tip, onSave }) {
 					variant='contained'
 					color='primary'
 					disabled={loading}
+					fullWidth={isMobile}
 					startIcon={loading && <CircularProgress size={18} color='inherit' />}
 				>
 					{loading ? "Saving..." : "Save Changes"}

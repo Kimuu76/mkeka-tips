@@ -14,6 +14,7 @@ import {
 	DialogContent,
 	DialogActions,
 	Divider,
+	useMediaQuery,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -22,8 +23,12 @@ import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api/api";
+import { useTheme } from "@mui/material/styles";
 
 export default function AdminForm({ onTipAdded }) {
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
 	const [form, setForm] = useState({
 		date: null,
 		time: "",
@@ -72,12 +77,12 @@ export default function AdminForm({ onTipAdded }) {
 		setLoading(true);
 		try {
 			const formattedDate = dayjs(form.date).format("YYYY-MM-DD");
-			const dayName = dayjs(form.date).format("dddd"); // ✅ Get day name
+			const dayName = dayjs(form.date).format("dddd");
 
 			const payload = {
 				...form,
 				date: formattedDate,
-				day: dayName, // ✅ Add day for DB
+				day: dayName,
 			};
 
 			await api.post("/tips", payload);
@@ -120,15 +125,28 @@ export default function AdminForm({ onTipAdded }) {
 	};
 
 	return (
-		<Paper sx={{ padding: 4, maxWidth: 700, margin: "30px auto" }}>
-			<Typography variant='h5' gutterBottom fontWeight='bold'>
+		<Paper
+			sx={{
+				padding: 4,
+				maxWidth: 700,
+				margin: "30px auto",
+				borderRadius: 3,
+				boxShadow: 3,
+			}}
+		>
+			<Typography
+				variant='h5'
+				gutterBottom
+				fontWeight='bold'
+				sx={{ textAlign: "center", mb: 3 }}
+			>
 				Add New Tip
 			</Typography>
 
 			<LocalizationProvider dateAdapter={AdapterDayjs}>
 				<form onSubmit={handleOpenConfirm}>
 					<Grid container spacing={2}>
-						{/* ✅ Date Picker */}
+						{/* Date Picker */}
 						<Grid item xs={12} sm={6}>
 							<DatePicker
 								label='Match Date'
@@ -136,12 +154,17 @@ export default function AdminForm({ onTipAdded }) {
 								onChange={handleDateChange}
 								disablePast
 								slotProps={{
-									textField: { fullWidth: true, required: true },
+									textField: {
+										fullWidth: true,
+										required: true,
+										variant: "outlined",
+										sx: { borderRadius: 2 },
+									},
 								}}
 							/>
 						</Grid>
 
-						{/* ✅ Time Input */}
+						{/* Time Input */}
 						<Grid item xs={12} sm={6}>
 							<TextField
 								name='time'
@@ -151,41 +174,27 @@ export default function AdminForm({ onTipAdded }) {
 								onChange={handleChange}
 								fullWidth
 								required
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={6}>
-							<TextField
-								name='league'
-								label='League'
-								value={form.league}
-								onChange={handleChange}
-								fullWidth
-								required
-							/>
-						</Grid>
-
-						<Grid item xs={12} sm={6}>
-							<TextField
-								name='home'
-								label='Home Team'
-								value={form.home}
-								onChange={handleChange}
-								fullWidth
-								required
-							/>
-						</Grid>
-
-						<Grid item xs={12} sm={6}>
-							<TextField
-								name='away'
-								label='Away Team'
-								value={form.away}
-								onChange={handleChange}
-								fullWidth
-								required
-							/>
-						</Grid>
+						{[
+							{ name: "league", label: "League" },
+							{ name: "home", label: "Home Team" },
+							{ name: "away", label: "Away Team" },
+						].map((field) => (
+							<Grid item xs={12} sm={6} key={field.name}>
+								<TextField
+									name={field.name}
+									label={field.label}
+									value={form[field.name]}
+									onChange={handleChange}
+									fullWidth
+									required
+									sx={{ borderRadius: 2 }}
+								/>
+							</Grid>
+						))}
 
 						<Grid item xs={12} sm={6}>
 							<TextField
@@ -196,6 +205,7 @@ export default function AdminForm({ onTipAdded }) {
 								onChange={handleChange}
 								fullWidth
 								required
+								sx={{ borderRadius: 2 }}
 							>
 								<MenuItem value='Over/Under'>Over/Under</MenuItem>
 								<MenuItem value='1X2'>1X2</MenuItem>
@@ -211,6 +221,7 @@ export default function AdminForm({ onTipAdded }) {
 								onChange={handleChange}
 								fullWidth
 								required
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
@@ -224,6 +235,7 @@ export default function AdminForm({ onTipAdded }) {
 								onChange={handleChange}
 								fullWidth
 								required
+								sx={{ borderRadius: 2 }}
 							/>
 						</Grid>
 
@@ -235,6 +247,7 @@ export default function AdminForm({ onTipAdded }) {
 								value={form.plan}
 								onChange={handleChange}
 								fullWidth
+								sx={{ borderRadius: 2 }}
 							>
 								<MenuItem value='Free'>Free</MenuItem>
 								<MenuItem value='Silver'>Silver</MenuItem>
@@ -243,9 +256,15 @@ export default function AdminForm({ onTipAdded }) {
 							</TextField>
 						</Grid>
 
-						{/* ✅ Action Buttons */}
+						{/* Action Buttons */}
 						<Grid item xs={12}>
-							<Box sx={{ display: "flex", gap: 2 }}>
+							<Box
+								sx={{
+									display: "flex",
+									flexDirection: isMobile ? "column" : "row",
+									gap: 2,
+								}}
+							>
 								<Button
 									type='submit'
 									variant='contained'
@@ -253,6 +272,7 @@ export default function AdminForm({ onTipAdded }) {
 									fullWidth
 									disabled={loading}
 									startIcon={loading && <CircularProgress size={20} />}
+									sx={{ py: 1.2, borderRadius: 2 }}
 								>
 									{loading ? "Adding..." : "Add Tip"}
 								</Button>
@@ -262,6 +282,7 @@ export default function AdminForm({ onTipAdded }) {
 									fullWidth
 									disabled={loading}
 									onClick={handleClear}
+									sx={{ py: 1.2, borderRadius: 2 }}
 								>
 									Clear
 								</Button>
@@ -271,51 +292,73 @@ export default function AdminForm({ onTipAdded }) {
 				</form>
 			</LocalizationProvider>
 
-			{/* ✅ Confirmation Dialog */}
+			{/* Confirmation Dialog */}
 			<Dialog
 				open={openConfirm}
 				onClose={handleCloseConfirm}
 				maxWidth='sm'
 				fullWidth
 			>
-				<DialogTitle>Preview Tip Before Adding</DialogTitle>
-				<DialogContent>
+				<DialogTitle
+					sx={{
+						fontWeight: "bold",
+						textAlign: "center",
+						background: "#f5f5f5",
+					}}
+				>
+					Preview Tip Before Adding
+				</DialogTitle>
+				<DialogContent sx={{ p: 3 }}>
 					<Typography variant='body1' gutterBottom>
-						Please review the tip details before confirming:
+						Please review the tip details carefully before confirming:
 					</Typography>
 					<Divider sx={{ my: 2 }} />
-					<Typography>
-						<strong>Date:</strong>{" "}
-						{form.date ? dayjs(form.date).format("YYYY-MM-DD") : "-"}
-					</Typography>
-					<Typography>
-						<strong>Day:</strong>{" "}
-						{form.date ? dayjs(form.date).format("dddd") : "-"}
-					</Typography>
-					<Typography>
-						<strong>Time:</strong> {form.time}
-					</Typography>
-					<Typography>
-						<strong>League:</strong> {form.league}
-					</Typography>
-					<Typography>
-						<strong>Match:</strong> {form.home} vs {form.away}
-					</Typography>
-					<Typography>
-						<strong>Market:</strong> {form.market}
-					</Typography>
-					<Typography>
-						<strong>Pick:</strong> {form.pick}
-					</Typography>
-					<Typography>
-						<strong>Odds:</strong> {form.odds}
-					</Typography>
-					<Typography>
-						<strong>Plan:</strong> {form.plan}
-					</Typography>
+
+					<Box sx={{ display: "grid", gap: 1.2 }}>
+						<Typography>
+							<strong>Date:</strong>{" "}
+							{form.date ? dayjs(form.date).format("YYYY-MM-DD") : "-"}
+						</Typography>
+						<Typography>
+							<strong>Day:</strong>{" "}
+							{form.date ? dayjs(form.date).format("dddd") : "-"}
+						</Typography>
+						<Typography>
+							<strong>Time:</strong> {form.time}
+						</Typography>
+						<Typography>
+							<strong>League:</strong> {form.league}
+						</Typography>
+						<Typography>
+							<strong>Match:</strong> {form.home} vs {form.away}
+						</Typography>
+						<Typography>
+							<strong>Market:</strong> {form.market}
+						</Typography>
+						<Typography>
+							<strong>Pick:</strong> {form.pick}
+						</Typography>
+						<Typography>
+							<strong>Odds:</strong> {form.odds}
+						</Typography>
+						<Typography>
+							<strong>Plan:</strong> {form.plan}
+						</Typography>
+					</Box>
 				</DialogContent>
-				<DialogActions>
-					<Button onClick={handleCloseConfirm} color='secondary'>
+				<DialogActions
+					sx={{
+						justifyContent: isMobile ? "center" : "flex-end",
+						gap: 2,
+						p: 2,
+						backgroundColor: "#f5f5f5",
+					}}
+				>
+					<Button
+						onClick={handleCloseConfirm}
+						color='secondary'
+						variant='outlined'
+					>
 						Cancel
 					</Button>
 					<Button onClick={handleSubmit} color='primary' variant='contained'>
