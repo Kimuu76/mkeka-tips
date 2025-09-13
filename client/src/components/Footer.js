@@ -123,7 +123,7 @@ export default function Footer() {
 					</Typography>
 					<IconButton
 						color='inherit'
-						href='https://facebook.com'
+						href='https://facebook.com/profile.php?id=61580468557769'
 						target='_blank'
 					>
 						<FacebookIcon />
