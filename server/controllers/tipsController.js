@@ -186,7 +186,7 @@ exports.getRecentResults = async (req, res) => {
 	try {
 		const pool = await getConnection();
 		const result = await pool.request().query(`
-			SELECT TOP 100 Id, CONVERT(VARCHAR(10), [Date], 23) AS Date, Home, Away, Pick, Status, Score, [Plan]
+			SELECT TOP 100 Id, CONVERT(VARCHAR(10), [Date], 23) AS Date, Home, Away, Market, Pick, Status, Score, [Plan]
 			FROM Tips
 			WHERE Status IN ('Won', 'Lost')
 			ORDER BY [Date] DESC, Time DESC
@@ -198,6 +198,7 @@ exports.getRecentResults = async (req, res) => {
 				groupedResults[tip.Plan].push({
 					date: tip.Date,
 					fixture: `${tip.Home} vs ${tip.Away}`,
+					market: tip.Market,
 					tip: tip.Pick,
 					result: tip.Score || "-",
 					status: tip.Status,

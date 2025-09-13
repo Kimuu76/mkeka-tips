@@ -107,6 +107,7 @@ export default function RecentResults() {
 									<TableRow sx={{ backgroundColor: "#f5f5f5" }}>
 										<TableCell>Date</TableCell>
 										<TableCell>Fixture</TableCell>
+										<TableCell>Market</TableCell>
 										<TableCell>Tip</TableCell>
 										<TableCell>Result</TableCell>
 										<TableCell>Status</TableCell>
@@ -121,7 +122,7 @@ export default function RecentResults() {
 													key={dayLabel}
 													style={{ backgroundColor: "#f0f0f0" }}
 												>
-													<TableCell colSpan={5} style={{ fontWeight: "bold" }}>
+													<TableCell colSpan={6} style={{ fontWeight: "bold" }}>
 														{dayLabel}
 													</TableCell>
 												</TableRow>
@@ -131,6 +132,7 @@ export default function RecentResults() {
 													<TableRow key={idx}>
 														<TableCell>{r.date}</TableCell>
 														<TableCell>{r.fixture}</TableCell>
+														<TableCell>{r.market}</TableCell>
 														<TableCell>{r.tip}</TableCell>
 														<TableCell>{r.result}</TableCell>
 														<TableCell
